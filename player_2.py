@@ -20,8 +20,8 @@ PORT = 8789
 class ConnectFour2:
 
     # constructor and building the board
-    def __init__(self):
-        self._player = 2
+    def __init__(self, player=1):
+        self.player = player
         self._font = None
         self.screen = None  # to be changed later
         self.turn = 1
@@ -39,7 +39,7 @@ class ConnectFour2:
 
     # is it my turn
     def is_my_turn(self):
-        return self._player == self.turn
+        return self.player == self.turn
 
     # a part that's happening twice during the animation function
     def help_animation(self, col, i):
@@ -257,7 +257,7 @@ def main():
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((IP, PORT))
     print("server connected")
-    c = ConnectFour2()
+    c = ConnectFour2(2)
     start_game_thread = Thread(target=lambda: start_game(c))
     start_game_thread.start()
 
