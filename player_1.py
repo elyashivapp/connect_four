@@ -232,7 +232,7 @@ def start_game(c):
     c.game()
 
 
-def main():
+def play_vs_random():
     random.randint(0, 6)
     c = ConnectFour2()
     start_game_thread = Thread(target=lambda: start_game(c))
@@ -243,6 +243,10 @@ def main():
                 break
             time.sleep(0.5)
         c.drop(random.randint(0, 6))
+
+
+def main():
+    pass
 
 
 if __name__ == "__main__":
