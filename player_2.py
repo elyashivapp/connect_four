@@ -1,4 +1,5 @@
 import random
+import socket
 import sys
 import time
 from threading import Thread
@@ -11,6 +12,9 @@ BLACK = "black"
 BLUE = "blue"
 GREEN = "#15d642"
 RED = "#e03409"
+
+IP = "127.0.0.1"
+PORT = 8789
 
 
 class ConnectFour2:
@@ -250,7 +254,29 @@ def play_vs_random():
 
 
 def main():
-    pass
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client_socket.connect((IP, PORT))
+    print("server connected")
+    c = ConnectFour2()
+    start_game_thread = Thread(target=lambda: start_game(c))
+    start_game_thread.start()
+
+    while True:
+        # get player-2's move from the server
+        player_b_move = int(client_socket.recv(1024).decode())
+        if 0 <= player_b_move <= 6:
+            c.drop(player_b_move)
+        else:
+            print("illegal move!")
+
+        # wait for move
+        while True:
+            if not c.is_my_turn():
+                break
+            time.sleep(0.5)
+
+        # send your move to the server
+        client_socket.send(str(c.last_move()).encode())
 
 
 if __name__ == "__main__":
