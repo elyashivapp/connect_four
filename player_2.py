@@ -22,6 +22,7 @@ class ConnectFour2:
         self.screen = None  # to be changed later
         self.turn = 1
         self.game_over = False
+        self.last_move_list = []
         self._square_size = 100
         self._row_count = 6
         self._column_count = 7
@@ -73,6 +74,11 @@ class ConnectFour2:
         self.board[row][col] = self.turn
         self.current_board()
         self.turn = 3 - self.turn
+        self.last_move_list.insert(0, col)
+
+    # func to return last move
+    def last_move(self):
+        return self.last_move_list[0]
 
     # checking to see if the chosen location is available
     def is_valid_location(self, col):

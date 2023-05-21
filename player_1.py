@@ -1,5 +1,4 @@
 import random
-import socket
 import sys
 import time
 from threading import Thread
@@ -13,8 +12,7 @@ BLUE = "blue"
 GREEN = "#15d642"
 RED = "#e03409"
 
-IP = "127.0.0.1"
-PORT = 8789
+player_b_move = ""
 
 
 class ConnectFour2:
@@ -26,6 +24,7 @@ class ConnectFour2:
         self.screen = None  # to be changed later
         self.turn = 1
         self.game_over = False
+        self.last_move_list = []
         self._square_size = 100
         self._row_count = 6
         self._column_count = 7
@@ -77,6 +76,11 @@ class ConnectFour2:
         self.board[row][col] = self.turn
         self.current_board()
         self.turn = 3 - self.turn
+        self.last_move_list.insert(0, col)
+
+    # func to return last move
+    def last_move(self):
+        return self.last_move_list[0]
 
     # checking to see if the chosen location is available
     def is_valid_location(self, col):
@@ -248,26 +252,7 @@ def play_vs_random():
 
 
 def main():
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect((IP, PORT))
-    print("server connected")
-    c = ConnectFour2()
-    start_game_thread = Thread(target=lambda: start_game(c))
-    start_game_thread.start()
-
-    while True:
-        # wait for player 1 to move
-        while True:
-            if not c.is_my_turn():
-                break
-            time.sleep(0.5)
-
-        # get player-2's move from the server
-        player_b_move = int(client_socket.recv(1024).decode())
-        if 0 <= player_b_move <= 6:
-            c.drop(player_b_move)
-        else:
-            print("illegal move!")
+    pass
 
 
 if __name__ == "__main__":
