@@ -17,7 +17,7 @@ class ConnectFour2:
 
     # constructor and building the board
     def __init__(self):
-        self._player = 1
+        self._player = 2
         self._font = None
         self.screen = None  # to be changed later
         self.turn = 1
