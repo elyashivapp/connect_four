@@ -13,7 +13,7 @@ GREEN = "#15d642"
 RED = "#e03409"
 
 player_b_move = ""
-
+i_wrote_this_text = False
 
 class ConnectFour2:
 
