@@ -20,9 +20,9 @@ PORT = 8789
 class ConnectFour2:
 
     # constructor and building the board
-    def __init__(self):
-        self._player = 1
-        self._font = None
+    def __init__(self, player=1):
+        self._player = player
+        self._font = None   #
         self.screen = None  # to be changed later
         self.turn = 1
         self.game_over = False
@@ -66,7 +66,7 @@ class ConnectFour2:
     def follow(self, event):
         pygame.draw.rect(self.screen, BLACK, (0, 0, self._width, self._square_size))
         posx = event.pos[0]
-        if self.turn == 1:
+        if self._player == 1:
             pygame.draw.circle(self.screen, GREEN, (posx, int(self._square_size / 2)), 45)
         else:
             pygame.draw.circle(self.screen, RED, (posx, int(self._square_size / 2)), 45)
@@ -150,11 +150,10 @@ class ConnectFour2:
     def reset(self):
         self.turn = 1
         pygame.time.wait(3000)
-        self.game_over = False
         self.draw_board()
-        for c in range(self._column_count):
-            for r in range(self._row_count):
-                self.board[r][c] = 0
+        self.board = np.zeros((self._row_count, self._column_count))
+        self.current_board()
+        self.game()
 
     # the game setting
     def setting_game(self):
@@ -168,11 +167,11 @@ class ConnectFour2:
 
     # the game
     def game(self):
-        self.setting_game()
+        self.game_over = False
         while not self.game_over:
 
-            # pressing x
             for event in pygame.event.get():
+                # pressing x
                 if event.type == pygame.QUIT:
                     sys.exit()
 
@@ -192,51 +191,29 @@ class ConnectFour2:
                 # the playing part
                 if event.type == pygame.MOUSEBUTTONDOWN:
                     # checking which player's turn is it
-                    if self.turn == 1:
+                    if self.turn == self._player:
                         posx = event.pos[0]
                         col1 = int(math.floor(posx / self._square_size))
                         if self.is_valid_location(col1):
                             self.drop(col1)
 
-                            if self.winning_move(1):
-                                self.current_board()
+                            if self.winning_move(self._player):
                                 pygame.draw.rect(self.screen, BLACK, (0, 0, self._width, self._square_size))
                                 label = self._font.render("The Green Player Won!!!", 1, GREEN)
                                 self.screen.blit(label, (40, 10))
-                                self.game_over = True
+                                time.sleep(2)
+                                self.game_over = True       # resetting the game
 
-                        else:
-                            self.turn == 1
-                    # end of the green player's turn
-
-                    # red player
-                    elif self.turn == 2:
-                        posx = event.pos[0]
-                        col2 = int(math.floor(posx / self._square_size))
-
-                        if self.is_valid_location(col2):
-                            self.drop(col2)
-
-                            if self.winning_move(2):
-                                self.current_board()
-                                pygame.draw.rect(self.screen, BLACK, (0, 0, self._width, self._square_size))
-                                label2 = self._font.render("The Red Player Won!!!", 1, RED)
-                                self.screen.blit(label2, (40, 10))
-                                self.game_over = True
-
-                        else:
-                            self.turn = 2
-                    # end of the red player's turn
+                    # end of your turn
 
                     print(self)
                     self.current_board()
+        self.reset()
 
-                # resetting the game
-                if self.game_over:
-                    self.reset()
 
 
 def start_game(c):
+    c.setting_game()
     c.game()
 
 
@@ -275,6 +252,11 @@ def main():
         player_b_move = int(client_socket.recv(1024).decode())
         if 0 <= player_b_move <= 6:
             c.drop(player_b_move)
+            if c.winning_move(3 - c._player):
+                pygame.draw.rect(c.screen, BLACK, (0, 0, c._width, c._square_size))
+                label2 = c._font.render("The Red Player Won!!!", 1, RED)
+                c.screen.blit(label2, (40, 10))
+                c.game_over = True
         else:
             print("illegal move!")
 
