@@ -13,6 +13,9 @@ BLUE = "blue"
 GREEN = "#15d642"
 RED = "#e03409"
 
+players = {1: "Green", 2: "Red"}
+players_colors = {1: GREEN, 2: RED}
+
 IP = "127.0.0.1"
 PORT = 8789
 
@@ -149,10 +152,11 @@ class ConnectFour2:
     # resetting
     def reset(self):
         self.turn = 1
-        pygame.time.wait(3000)
+        self.last_move_list = []
         self.draw_board()
         self.board = np.zeros((self._row_count, self._column_count))
         self.current_board()
+        pygame.time.wait(2000)
         self.game()
 
     # the game setting
@@ -182,6 +186,7 @@ class ConnectFour2:
                     label = self._font.render("Tie, no one won.", 1, "white")
                     self.screen.blit(label, (40, 10))
                     self.game_over = True
+                    time.sleep(2)
 
                 # following the mouse animation
                 if event.type == pygame.MOUSEMOTION:
@@ -190,24 +195,26 @@ class ConnectFour2:
 
                 # the playing part
                 if event.type == pygame.MOUSEBUTTONDOWN:
-                    # checking which player's turn is it
+
+                    # your turn
                     if self.turn == self._player:
                         posx = event.pos[0]
-                        col1 = int(math.floor(posx / self._square_size))
-                        if self.is_valid_location(col1):
-                            self.drop(col1)
+                        col = int(math.floor(posx / self._square_size))
+                        if self.is_valid_location(col):
+                            self.drop(col)
 
                             if self.winning_move(self._player):
                                 pygame.draw.rect(self.screen, BLACK, (0, 0, self._width, self._square_size))
-                                label = self._font.render("The Green Player Won!!!", 1, GREEN)
+                                label = self._font.render(f"The {players[self._player]} Player Won!!!", 1, players_colors[self._player])
                                 self.screen.blit(label, (40, 10))
-                                time.sleep(2)
                                 self.game_over = True       # resetting the game
+                                time.sleep(1)
 
                     # end of your turn
 
                     print(self)
                     self.current_board()
+
         self.reset()
 
 
@@ -234,19 +241,25 @@ def main():
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((IP, PORT))
     print("server connected")
-    c = ConnectFour2()
+    which_player = int(client_socket.recv(1024).decode())
+    c = ConnectFour2(which_player)
     start_game_thread = Thread(target=lambda: start_game(c))
     start_game_thread.start()
 
     while True:
-        # wait for player 1 to move
+        # wait for move
         while True:
             if not c.is_my_turn():
                 break
             time.sleep(0.5)
 
         # send your move to the server
-        client_socket.send(str(c.last_move()).encode())
+        if c._player != 2 or len(c.last_move_list) > 1:
+            client_socket.send(str(c.last_move()).encode())
+
+        if c.game_over:
+            time.sleep(3)
+            continue
 
         # get player-2's move from the server
         player_b_move = int(client_socket.recv(1024).decode())
@@ -254,9 +267,10 @@ def main():
             c.drop(player_b_move)
             if c.winning_move(3 - c._player):
                 pygame.draw.rect(c.screen, BLACK, (0, 0, c._width, c._square_size))
-                label2 = c._font.render("The Red Player Won!!!", 1, RED)
-                c.screen.blit(label2, (40, 10))
+                label = c._font.render(f"The {players[3 - c._player]} Player Won!!!", 1, players_colors[3 - c._player])
+                c.screen.blit(label, (40, 10))
                 c.game_over = True
+                time.sleep(3)
         else:
             print("illegal move!")
 

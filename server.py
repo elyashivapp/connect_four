@@ -8,9 +8,11 @@ server_socket.listen()
 print("Listening...")
 
 player_1_socket, player_1_address = server_socket.accept()
+player_1_socket.send("1".encode())
 print("Player 1 connected!")
 
 player_2_socket, player_2_address = server_socket.accept()
+player_2_socket.send("2".encode())
 print("Player 2 connected!")
 
 while True:
