@@ -4,6 +4,7 @@ import sys
 import time
 from threading import Thread
 import numpy as np
+import rsa
 import pygame
 import math
 
@@ -12,6 +13,7 @@ BLACK = "black"
 BLUE = "blue"
 GREEN = "#15d642"
 RED = "#e03409"
+WHITE = "white"
 
 players = {1: "Green", 2: "Red"}
 players_colors = {1: GREEN, 2: RED}
@@ -25,10 +27,13 @@ class ConnectFour2:
     # constructor and building the board
     def __init__(self, player=1):
         self._player = player
-        self._font = None   #
+        self._font = None  #
         self.screen = None  # to be changed later
         self.turn = 1
         self.game_over = False
+        self.you_played_finishing = False
+        self.finished_1 = False  # for signaling to the other thread to continue
+        self.finished_2 = False
         self.last_move_list = []
         self._square_size = 100
         self._row_count = 6
@@ -156,7 +161,12 @@ class ConnectFour2:
         self.draw_board()
         self.board = np.zeros((self._row_count, self._column_count))
         self.current_board()
-        pygame.time.wait(2000)
+        self.finished_2 = True
+        while True:
+            if self.finished_1:
+                self.finished_1 = False
+                break
+            time.sleep(0.5)
         self.game()
 
     # the game setting
@@ -177,16 +187,23 @@ class ConnectFour2:
             for event in pygame.event.get():
                 # pressing x
                 if event.type == pygame.QUIT:
+                    pygame.quit()
                     sys.exit()
 
                 # in a case of tie
                 if self.board.all():
                     self.current_board()
                     pygame.draw.rect(self.screen, BLACK, (0, 0, self._width, self._square_size))
-                    label = self._font.render("Tie, no one won.", 1, "white")
+                    label = self._font.render("Tie, no one won.", 1, WHITE)
                     self.screen.blit(label, (40, 10))
                     self.game_over = True
+                    self.you_played_finishing = True
                     time.sleep(2)
+                    while True:
+                        if self.finished_1:
+                            self.finished_1 = False
+                            break
+                        time.sleep(0.5)
 
                 # following the mouse animation
                 if event.type == pygame.MOUSEMOTION:
@@ -200,16 +217,23 @@ class ConnectFour2:
                     if self.turn == self._player:
                         posx = event.pos[0]
                         col = int(math.floor(posx / self._square_size))
-
                         if self.is_valid_location(col):
                             self.drop(col)
 
                             if self.winning_move(self._player):
                                 pygame.draw.rect(self.screen, BLACK, (0, 0, self._width, self._square_size))
-                                label = self._font.render(f"The {players[self._player]} Player Won!!!", 1, players_colors[self._player])
+                                label = self._font.render(f"The {players[self._player]} Player Won!!!", 1,
+                                                          players_colors[self._player])
                                 self.screen.blit(label, (40, 10))
-                                self.game_over = True       # resetting the game
-                                time.sleep(1)
+                                self.game_over = True  # resetting the game
+                                self.you_played_finishing = True
+                                time.sleep(2)
+                                while True:
+                                    if self.finished_1:
+                                        self.finished_1 = False
+                                        break
+                                    time.sleep(0.5)
+
                     # end of your turn
 
                     print(self)
@@ -221,6 +245,25 @@ class ConnectFour2:
 def start_game(c):
     c.setting_game()
     c.game()
+
+
+def waiting_screen(c):
+    pygame.init()
+    pygame.display.set_caption("waiting...")
+    font = pygame.font.SysFont("monospace", 30)
+    screen = pygame.display.set_mode((600, 80))
+    screen.fill(WHITE)
+    label = font.render("Waiting for second player...", 1, BLACK)
+    screen.blit(label, (10, 10))
+    pygame.display.update()
+    while not c.finished_1:
+        for event in pygame.event.get():
+            # pressing x
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+    c.finished_1 = False
+    pygame.quit()
 
 
 def play_vs_random():
@@ -242,6 +285,16 @@ def main():
     print("server connected")
     which_player = int(client_socket.recv(1024).decode())
     c = ConnectFour2(which_player)
+    if c._player == 1:
+        waiting_screen_thread = Thread(target=lambda: waiting_screen(c))
+        waiting_screen_thread.start()
+        client_socket.recv(1024).decode()
+        c.finished_1 = True
+        while True:
+            if not c.finished_1:
+                break
+            time.sleep(0.5)
+        waiting_screen_thread.join()
     start_game_thread = Thread(target=lambda: start_game(c))
     start_game_thread.start()
 
@@ -253,23 +306,58 @@ def main():
             time.sleep(0.5)
 
         # send your move to the server
-        if c._player != 2 or len(c.last_move_list) > 1:
+        if c._player != 2 or len(c.last_move_list) >= 1:
             client_socket.send(str(c.last_move()).encode())
 
+        # what to do if the game is over
         if c.game_over:
-            time.sleep(3)
-            continue
+            c.finished_1 = True
+            if c.you_played_finishing:
+                while True:
+                    if c.finished_2:
+                        c.finished_2 = False
+                        break
+                    time.sleep(0.5)
+                c.finished_1 = True
+                if c._player == 1:
+                    continue
+            else:   # player 1 never gets here
+                client_socket.send("done".encode())
 
         # get player-2's move from the server
         player_b_move = int(client_socket.recv(1024).decode())
         if 0 <= player_b_move <= 6:
             c.drop(player_b_move)
+            # checks if the second player won
             if c.winning_move(3 - c._player):
                 pygame.draw.rect(c.screen, BLACK, (0, 0, c._width, c._square_size))
                 label = c._font.render(f"The {players[3 - c._player]} Player Won!!!", 1, players_colors[3 - c._player])
                 c.screen.blit(label, (40, 10))
                 c.game_over = True
-                time.sleep(3)
+                time.sleep(2)
+                while True:
+                    if c.finished_2:
+                        c.finished_2 = False
+                        break
+                    time.sleep(0.5)
+                if c._player == 1:
+                    c.finished_1 = True
+            # checks if second player played a tie
+            elif c.board.all():
+                pygame.draw.rect(c.screen, BLACK, (0, 0, c._width, c._square_size))
+                label = c._font.render("Tie, no one won.", 1, WHITE)
+                c.screen.blit(label, (40, 10))
+                c.game_over = True
+                time.sleep(2)
+                while True:
+                    if c.finished_2:
+                        c.finished_2 = False
+                        break
+                    time.sleep(0.5)
+                if c._player == 1:
+                    c.finished_1 = True
+
+
         else:
             print("illegal move!")
 
