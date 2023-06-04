@@ -167,6 +167,7 @@ class ConnectFour2:
                 self.finished_1 = False
                 break
             time.sleep(0.5)
+        self.you_played_finishing = False
         self.game()
 
     # the game setting
