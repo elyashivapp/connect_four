@@ -1,4 +1,3 @@
-import random
 import socket
 import sys
 import time
@@ -265,19 +264,6 @@ def waiting_screen(c):
                 sys.exit()
     c.finished_1 = False
     pygame.quit()
-
-
-def play_vs_random():
-    random.randint(0, 6)
-    c = ConnectFour2()
-    start_game_thread = Thread(target=lambda: start_game(c))
-    start_game_thread.start()
-    while True:
-        while True:
-            if not c.is_my_turn():
-                break
-            time.sleep(0.5)
-        c.drop(random.randint(0, 6))
 
 
 def main():
