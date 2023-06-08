@@ -14,7 +14,7 @@ print("Player 1 connected!")
 
 player_2_socket, player_2_address = server_socket.accept()
 player_2_socket.send("2".encode())
-player_1_socket.send("2".encode())  # to signal he can start the game
+player_1_socket.send("2".encode())  # to signal the first player he can start the game
 print("Player 2 connected!")
 
 while True:
@@ -22,7 +22,7 @@ while True:
     player_2_socket.send(player_1_move)
 
     player_2_move = player_2_socket.recv(1024)
-    print(player_2_move.decode())
-    if player_2_move.decode() == "done":
+    if player_2_move.decode() == "done":    # if the first player wins, the loop get stuck here, so this is the
+        # solution
         continue
     player_1_socket.send(player_2_move)
