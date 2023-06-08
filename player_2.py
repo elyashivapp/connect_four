@@ -22,6 +22,7 @@ players_colors = {1: GREEN, 2: RED}
 
 IP = "127.0.0.1"
 PORT = 8789
+pub_key, priv_key = rsa.newkeys(512)
 
 
 class ConnectFour2:
@@ -379,6 +380,14 @@ class ConnectFour2:
         pygame.quit()
 
 
+def encrypt(msg, pub_key):
+    pass
+
+
+def decrypt(msg, priv_key):
+    pass
+
+
 def start_game(c):
     c.setting_game()
     c.game()
@@ -511,15 +520,22 @@ def multiplayer():
     print("server connected")
     which_player = int(client_socket.recv(1024).decode())
     c = ConnectFour2(which_player)
+
+    # get the server public key
+    msg = client_socket.recv(1024)
+    serv_pub_key = rsa.key.PublicKey.load_pkcs1(msg, format="DER")
+
     if c.player == 1:
         waiting_screen_thread = Thread(target=lambda: waiting_screen(c))
         waiting_screen_thread.start()
         client_socket.recv(1024).decode()
         c.finished_1 = True
+
         while True:
             if not c.finished_1:
                 break
             time.sleep(0.5)
+
         waiting_screen_thread.join()
     start_game_thread = Thread(target=lambda: start_game(c))
     start_game_thread.start()
@@ -533,7 +549,7 @@ def multiplayer():
 
         # send your move to the server
         if c.player != 2 or len(c.last_move_list) >= 1:
-            client_socket.send(str(c.last_move()).encode())
+            client_socket.send(encrypt(str(c.last_move()).encode(), serv_pub_key))
 
         # what to do if the game is over
         if c.game_over:
@@ -548,7 +564,7 @@ def multiplayer():
                 if c.player == 1:
                     continue
             else:  # player 1 never gets here
-                client_socket.send("done".encode())
+                client_socket.send(encrypt("done".encode(), serv_pub_key))
 
         # get player-2's move from the server
         player_b_move = int(client_socket.recv(1024).decode())
