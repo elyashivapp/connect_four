@@ -299,6 +299,7 @@ class ConnectFour2:
                                 label = self.font.render("The Green Player Won!!!", 1, GREEN)
                                 self.screen.blit(label, (40, 10))
                                 self.game_over = True  # resetting the game
+                                time.sleep(2)
                     # end of Greens turn
 
                     # Red turn
@@ -313,6 +314,7 @@ class ConnectFour2:
                                 label = self.font.render("The Red Player Won!!!", 1, RED)
                                 self.screen.blit(label, (40, 10))
                                 self.game_over = True  # resetting the game
+                                time.sleep(2)
                     # end of Reds turn
 
                     print(self)
@@ -391,30 +393,6 @@ def decrypt(msg, priv_key):
 def start_game(c):
     c.setting_game()
     c.game()
-
-
-# menu to choose game style
-def menu():
-    window = tk.Tk()
-    window.geometry("160x350")
-    window.title("Connect Four Menu")
-    window.resizable(False, False)
-    hotspot_button = tk.Button(window, text="Hotspot", command=lambda: hotspot_command(window), width=10, height=2,
-                               font=("Arial", 20),
-                               background="red")
-    cpu_button = tk.Button(window, text="Cpu", command=lambda: level_menu(window), width=10, height=2,
-                           font=("Arial", 20),
-                           background="red")
-    multi_button = tk.Button(window, text="multiplayer", command=lambda: multi_command(window), width=10, height=2,
-                             font=("Arial", 20),
-                             background="red")
-    exit_button = tk.Button(window, text="Exit", command=sys.exit, width=10, height=2, font=("Arial", 20),
-                            background="blue")
-    hotspot_button.pack()
-    cpu_button.pack()
-    multi_button.pack()
-    exit_button.pack()
-    window.mainloop()
 
 
 def multi_command(window):
@@ -624,11 +602,31 @@ def waiting_screen(c):
 
 
 def main():
-    # calling the menu
-    menu_on = True
-    while menu_on:
-        menu()
+    window = tk.Tk()
+    window.geometry("160x350")
+    window.title("Connect Four Menu")
+    window.resizable(False, False)
+    window.protocol('WM_DELETE_WINDOW', sys.exit)
+    hotspot_button = tk.Button(window, text="Hotspot", command=lambda: hotspot_command(window), width=10, height=2,
+                               font=("Arial", 20),
+                               background="red")
+    cpu_button = tk.Button(window, text="Cpu", command=lambda: level_menu(window), width=10, height=2,
+                           font=("Arial", 20),
+                           background="red")
+    multi_button = tk.Button(window, text="multiplayer", command=lambda: multi_command(window), width=10, height=2,
+                             font=("Arial", 20),
+                             background="red")
+    exit_button = tk.Button(window, text="Exit", command=sys.exit, width=10, height=2, font=("Arial", 20),
+                            background="blue")
+    hotspot_button.pack()
+    cpu_button.pack()
+    multi_button.pack()
+    exit_button.pack()
+    window.mainloop()
 
 
 if __name__ == "__main__":
-    main()
+    # calling the menu
+    menu_on = True
+    while menu_on:
+        main()

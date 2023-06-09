@@ -20,11 +20,9 @@ WHITE = "white"
 players = {1: "Green", 2: "Red"}
 players_colors = {1: GREEN, 2: RED}
 
-# IP = "193.161.193.99"
-# PORT = 56559
-
 IP = "127.0.0.1"
 PORT = 8789
+pub_key, priv_key = rsa.newkeys(512)
 
 
 class ConnectFour2:
@@ -94,7 +92,7 @@ class ConnectFour2:
             pygame.draw.circle(self.screen, RED, (posx, int(self.square_size / 2)), 45)
 
     # placing the piece in the right spot
-    def drop(self, col: int):
+    def drop(self, col):
         row = self.get_next_open_row(col)
         self.animation(col)
         self.board[row][col] = self.turn
@@ -103,7 +101,7 @@ class ConnectFour2:
         self.last_move_list.insert(0, col)
 
     # func to return last move
-    def last_move(self) -> int:
+    def last_move(self):
         return self.last_move_list[0]
 
     # checking to see if the chosen location is available
@@ -133,15 +131,13 @@ class ConnectFour2:
 
         for c in range(self._column_count - 3):
             for r in range(self._row_count - 3):
-                if self.board[r][c] == piece and self.board[r + 1][c + 1] == piece \
-                        and self.board[r + 2][c + 2] == piece \
+                if self.board[r][c] == piece and self.board[r + 1][c + 1] == piece and self.board[r + 2][c + 2] == piece \
                         and self.board[r + 3][c + 3] == piece:
                     return True
 
         for c in range(self._column_count - 3):
             for r in range(3, self._row_count):
-                if self.board[r][c] == piece \
-                        and self.board[r - 1][c + 1] == piece and self.board[r - 2][c + 2] == piece \
+                if self.board[r][c] == piece and self.board[r - 1][c + 1] == piece and self.board[r - 2][c + 2] == piece \
                         and self.board[r - 3][c + 3] == piece:
                     return True
 
@@ -303,6 +299,7 @@ class ConnectFour2:
                                 label = self.font.render("The Green Player Won!!!", 1, GREEN)
                                 self.screen.blit(label, (40, 10))
                                 self.game_over = True  # resetting the game
+                                time.sleep(2)
                     # end of Greens turn
 
                     # Red turn
@@ -317,6 +314,7 @@ class ConnectFour2:
                                 label = self.font.render("The Red Player Won!!!", 1, RED)
                                 self.screen.blit(label, (40, 10))
                                 self.game_over = True  # resetting the game
+                                time.sleep(2)
                     # end of Reds turn
 
                     print(self)
@@ -385,40 +383,16 @@ class ConnectFour2:
 
 
 def encrypt(msg, pub_key):
-    return rsa.encrypt(msg, pub_key)
+    pass
 
 
 def decrypt(msg, priv_key):
-    return rsa.decrypt(msg, priv_key)
+    pass
 
 
 def start_game(c):
     c.setting_game()
     c.game()
-
-
-# menu to choose game style
-def menu():
-    window = tk.Tk()
-    window.geometry("160x350")
-    window.title("Connect Four Menu")
-    window.resizable(False, False)
-    hotspot_button = tk.Button(window, text="Hotspot", command=lambda: hotspot_command(window), width=10, height=2,
-                               font=("Arial", 20),
-                               background="red")
-    cpu_button = tk.Button(window, text="Cpu", command=lambda: level_menu(window), width=10, height=2,
-                           font=("Arial", 20),
-                           background="red")
-    multi_button = tk.Button(window, text="multiplayer", command=lambda: multi_command(window), width=10, height=2,
-                             font=("Arial", 20),
-                             background="red")
-    exit_button = tk.Button(window, text="Exit", command=sys.exit, width=10, height=2, font=("Arial", 20),
-                            background="blue")
-    hotspot_button.pack()
-    cpu_button.pack()
-    multi_button.pack()
-    exit_button.pack()
-    window.mainloop()
 
 
 def multi_command(window):
@@ -628,11 +602,31 @@ def waiting_screen(c):
 
 
 def main():
-    # calling the menu
-    menu_on = True
-    while menu_on:
-        menu()
+    window = tk.Tk()
+    window.geometry("160x350")
+    window.title("Connect Four Menu")
+    window.resizable(False, False)
+    window.protocol('WM_DELETE_WINDOW', sys.exit)
+    hotspot_button = tk.Button(window, text="Hotspot", command=lambda: hotspot_command(window), width=10, height=2,
+                               font=("Arial", 20),
+                               background="red")
+    cpu_button = tk.Button(window, text="Cpu", command=lambda: level_menu(window), width=10, height=2,
+                           font=("Arial", 20),
+                           background="red")
+    multi_button = tk.Button(window, text="multiplayer", command=lambda: multi_command(window), width=10, height=2,
+                             font=("Arial", 20),
+                             background="red")
+    exit_button = tk.Button(window, text="Exit", command=sys.exit, width=10, height=2, font=("Arial", 20),
+                            background="blue")
+    hotspot_button.pack()
+    cpu_button.pack()
+    multi_button.pack()
+    exit_button.pack()
+    window.mainloop()
 
 
 if __name__ == "__main__":
-    main()
+    # calling the menu
+    menu_on = True
+    while menu_on:
+        main()
