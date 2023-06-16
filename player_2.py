@@ -8,6 +8,7 @@ import rsa
 import tkinter as tk
 import pygame
 import math
+from Board import Board
 import cpu
 
 # colors
@@ -22,28 +23,24 @@ players_colors = {1: GREEN, 2: RED}
 
 IP = "127.0.0.1"
 PORT = 8789
-pub_key, priv_key = rsa.newkeys(512)
+public_key, private_key = rsa.newkeys(512)
 
 
-class ConnectFour2:
+class ConnectFour(Board):
 
     # constructor and building the board
     def __init__(self, player=1):
+        super().__init__()
         self.player = player
         self.font = None  #
         self.screen = None  # to be changed later
-        self.turn = 1
         self.game_over = False
         self.you_played_finishing = False
         self.finished_1 = False  # for signaling to the other thread to continue
         self.finished_2 = False
-        self.last_move_list = []
         self.square_size = 100
-        self._row_count = 6
-        self._column_count = 7
-        self.width = self._column_count * self.square_size
-        self._height = (self._row_count + 1) * self.square_size
-        self.board = np.zeros((self._row_count, self._column_count))
+        self.width = self._column * self.square_size
+        self._height = (self._row + 1) * self.square_size
 
     def __str__(self):
         return str(np.flip(self.board, 0))
@@ -62,8 +59,8 @@ class ConnectFour2:
 
     # making the illusion of the piece dropping
     def animation(self, col):
-        for i in range(self._row_count):
-            if self.board[self._row_count - 1 - i, col] == 0:
+        for i in range(self._row):
+            if self.board[self._row - 1 - i, col] == 0:
                 if self.turn == 1:
                     pygame.draw.circle(self.screen, GREEN, (int((col + 0.5) * self.square_size),
                                                             int((i + 1.5) * self.square_size)), 45)
@@ -92,6 +89,7 @@ class ConnectFour2:
             pygame.draw.circle(self.screen, RED, (posx, int(self.square_size / 2)), 45)
 
     # placing the piece in the right spot
+
     def drop(self, col):
         row = self.get_next_open_row(col)
         self.animation(col)
@@ -100,53 +98,10 @@ class ConnectFour2:
         self.turn = 3 - self.turn
         self.last_move_list.insert(0, col)
 
-    # func to return last move
-    def last_move(self):
-        return self.last_move_list[0]
-
-    # checking to see if the chosen location is available
-    def is_valid_location(self, col):
-        return self.board[self._row_count - 1][col] == 0
-
-    # make the piece fall in the right row
-    def get_next_open_row(self, col):
-        for i in range(self._row_count):
-            if self.board[i][col] == 0:
-                return i
-
-    # checking if the chosen move is the winning move
-    # the function is going through every possible winning situation
-    def winning_move(self, piece):
-        for c in range(self._column_count - 3):
-            for r in range(self._row_count):
-                if self.board[r][c] == piece and self.board[r][c + 1] == piece and self.board[r][c + 2] == piece \
-                        and self.board[r][c + 3] == piece:
-                    return True
-
-        for c in range(self._column_count):
-            for r in range(self._row_count - 3):
-                if self.board[r][c] == piece and self.board[r + 1][c] == piece and self.board[r + 2][c] == piece \
-                        and self.board[r + 3][c] == piece:
-                    return True
-
-        for c in range(self._column_count - 3):
-            for r in range(self._row_count - 3):
-                if self.board[r][c] == piece and self.board[r + 1][c + 1] == piece and self.board[r + 2][c + 2] == piece \
-                        and self.board[r + 3][c + 3] == piece:
-                    return True
-
-        for c in range(self._column_count - 3):
-            for r in range(3, self._row_count):
-                if self.board[r][c] == piece and self.board[r - 1][c + 1] == piece and self.board[r - 2][c + 2] == piece \
-                        and self.board[r - 3][c + 3] == piece:
-                    return True
-
-        return False
-
     # a function to draw the board on the pygame window
     def draw_board(self):
-        for c in range(self._column_count):
-            for r in range(self._row_count):
+        for c in range(self._column):
+            for r in range(self._row):
                 pygame.draw.rect(self.screen, BLUE, (
                     c * self.square_size, (r + 1) * self.square_size, self.square_size, self.square_size))
                 pygame.draw.circle(self.screen, BLACK,
@@ -154,8 +109,8 @@ class ConnectFour2:
 
     # a function to make the current board
     def current_board(self):
-        for c in range(self._column_count):
-            for r in range(self._row_count):
+        for c in range(self._column):
+            for r in range(self._row):
                 if self.board[r][c] == 1:
                     pygame.draw.circle(self.screen, GREEN,
                                        (int((c + 0.5) * self.square_size),
@@ -171,7 +126,7 @@ class ConnectFour2:
         self.turn = 1
         self.last_move_list = []
         self.draw_board()
-        self.board = np.zeros((self._row_count, self._column_count))
+        self.board = np.zeros((self._row, self._column))
         self.current_board()
         self.finished_2 = True
         while True:
@@ -185,7 +140,7 @@ class ConnectFour2:
     def reset(self):
         self.turn = 1
         self.last_move_list = []
-        self.board = np.zeros((self._row_count, self._column_count))
+        self.board = np.zeros((self._row, self._column))
 
     # the game setting
     def setting_game(self):
@@ -214,6 +169,7 @@ class ConnectFour2:
                     pygame.draw.rect(self.screen, BLACK, (0, 0, self.width, self.square_size))
                     label = self.font.render("Tie, no one won.", 1, WHITE)
                     self.screen.blit(label, (40, 10))
+                    pygame.display.update()
                     self.game_over = True
                     self.you_played_finishing = True
                     time.sleep(2)
@@ -243,6 +199,7 @@ class ConnectFour2:
                                 label = self.font.render(f"The {players[self.player]} Player Won!!!", 1,
                                                          players_colors[self.player])
                                 self.screen.blit(label, (40, 10))
+                                pygame.display.update()
                                 self.game_over = True  # resetting the game
                                 self.you_played_finishing = True
                                 time.sleep(2)
@@ -277,7 +234,9 @@ class ConnectFour2:
                     pygame.draw.rect(self.screen, BLACK, (0, 0, self.width, self.square_size))
                     label = self.font.render("Tie, no one won.", 1, WHITE)
                     self.screen.blit(label, (40, 10))
+                    pygame.display.update()
                     self.game_over = True
+                    time.sleep(2)
 
                 # following the mouse animation
                 if event.type == pygame.MOUSEMOTION:
@@ -298,6 +257,7 @@ class ConnectFour2:
                                 pygame.draw.rect(self.screen, BLACK, (0, 0, self.width, self.square_size))
                                 label = self.font.render("The Green Player Won!!!", 1, GREEN)
                                 self.screen.blit(label, (40, 10))
+                                pygame.display.update()
                                 self.game_over = True  # resetting the game
                                 time.sleep(2)
                     # end of Greens turn
@@ -313,6 +273,7 @@ class ConnectFour2:
                                 pygame.draw.rect(self.screen, BLACK, (0, 0, self.width, self.square_size))
                                 label = self.font.render("The Red Player Won!!!", 1, RED)
                                 self.screen.blit(label, (40, 10))
+                                pygame.display.update()
                                 self.game_over = True  # resetting the game
                                 time.sleep(2)
                     # end of Reds turn
@@ -342,7 +303,9 @@ class ConnectFour2:
                     pygame.draw.rect(self.screen, BLACK, (0, 0, self.width, self.square_size))
                     label = self.font.render("Tie, no one won.", 1, WHITE)
                     self.screen.blit(label, (40, 10))
+                    pygame.display.update()
                     self.game_over = True
+                    time.sleep(2)
 
                 # following the mouse animation
                 if event.type == pygame.MOUSEMOTION:
@@ -364,6 +327,7 @@ class ConnectFour2:
                                 label = self.font.render(f"The {players[self.player]} Player Won!!!", 1,
                                                          players_colors[self.player])
                                 self.screen.blit(label, (40, 10))
+                                pygame.display.update()
                                 time.sleep(2)
                                 pygame.quit()
                             self.finished_1 = True
@@ -383,11 +347,11 @@ class ConnectFour2:
 
 
 def encrypt(msg, pub_key):
-    pass
+    return rsa.encrypt(msg, pub_key)
 
 
 def decrypt(msg, priv_key):
-    pass
+    return rsa.decrypt(msg, priv_key)
 
 
 def start_game(c):
@@ -402,7 +366,7 @@ def multi_command(window):
 
 def hotspot_command(window):
     window.destroy()
-    c = ConnectFour2()
+    c = ConnectFour()
     c.hotspot()
 
 
@@ -414,15 +378,15 @@ def level_menu(old):
     window.resizable(False, False)
     hard_button = tk.Button(window, text="Hard", command=lambda: hard(window), width=10, height=2,
                             font=("Arial", 20),
-                            background="red")
+                            background="#008cff")
     medium_button = tk.Button(window, text="Medium", command=lambda: medium(window), width=10, height=2,
                               font=("Arial", 20),
-                              background="red")
+                              background="#008cff")
     easy_button = tk.Button(window, text="Easy", command=lambda: easy(window), width=10, height=2,
                             font=("Arial", 20),
-                            background="red")
+                            background="#008cff")
     exit_button = tk.Button(window, text="Back", command=window.destroy, width=10, height=2, font=("Arial", 20),
-                            background="blue")
+                            background="red")
     easy_button.pack()
     medium_button.pack()
     hard_button.pack()
@@ -448,8 +412,8 @@ def hard(window):
 def cpu_command(depth):
     player = random.choice([1, 2])
     cpu_player = 3 - player
-    game = ConnectFour2(player)
-    rival = cpu.Cpu(cpu_player, depth, game.board)
+    game = ConnectFour(player)
+    rival = cpu.Cpu(cpu_player, depth)
     cpu_game_thread = Thread(target=lambda: game.cpu_game())
     cpu_game_thread.start()
 
@@ -462,17 +426,17 @@ def cpu_command(depth):
     while not game.game_over:
         if game.turn == rival.player:
             if len(game.last_move_list) > 0:
-                rival.drop(game.last_move(), player)
+                rival.drop(game.last_move())
 
             if len(game.last_move_list) < 2:
                 game.drop(3)
-                rival.drop(3, cpu_player)
+                rival.drop(3)
 
             else:
                 print(game.turn)
                 move = rival.get_best_move()
                 game.drop(move)
-                rival.drop(move, cpu_player)
+                rival.drop(move)
 
             if game.winning_move(cpu_player):
                 pygame.draw.rect(game.screen, BLACK, (0, 0, game.width, game.square_size))
@@ -496,17 +460,21 @@ def multiplayer():
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client_socket.connect((IP, PORT))
     print("server connected")
-    which_player = int(client_socket.recv(1024).decode())
-    c = ConnectFour2(which_player)
 
     # get the server public key
     msg = client_socket.recv(1024)
     serv_pub_key = rsa.key.PublicKey.load_pkcs1(msg, format="DER")
 
+    # send the server your public key
+    client_socket.send(public_key.save_pkcs1(format="DER"))
+
+    which_player = int(decrypt(client_socket.recv(1024), private_key))
+    c = ConnectFour(which_player)
+
     if c.player == 1:
         waiting_screen_thread = Thread(target=lambda: waiting_screen(c))
         waiting_screen_thread.start()
-        client_socket.recv(1024).decode()
+        client_socket.recv(1024)
         c.finished_1 = True
 
         while True:
@@ -545,7 +513,7 @@ def multiplayer():
                 client_socket.send(encrypt("done".encode(), serv_pub_key))
 
         # get player-2's move from the server
-        player_b_move = int(client_socket.recv(1024).decode())
+        player_b_move = int(decrypt(client_socket.recv(1024), private_key))
         if 0 <= player_b_move <= 6:
             c.drop(player_b_move)
             # checks if the second player won
@@ -553,6 +521,7 @@ def multiplayer():
                 pygame.draw.rect(c.screen, BLACK, (0, 0, c.width, c.square_size))
                 label = c.font.render(f"The {players[3 - c.player]} Player Won!!!", 1, players_colors[3 - c.player])
                 c.screen.blit(label, (40, 10))
+                pygame.display.update()
                 c.game_over = True
                 time.sleep(2)
                 while True:
@@ -567,6 +536,7 @@ def multiplayer():
                 pygame.draw.rect(c.screen, BLACK, (0, 0, c.width, c.square_size))
                 label = c.font.render("Tie, no one won.", 1, WHITE)
                 c.screen.blit(label, (40, 10))
+                pygame.display.update()
                 c.game_over = True
                 time.sleep(2)
                 while True:
@@ -576,7 +546,6 @@ def multiplayer():
                     time.sleep(0.5)
                 if c.player == 1:
                     c.finished_1 = True
-
 
         else:
             print("illegal move!")
@@ -602,6 +571,7 @@ def waiting_screen(c):
 
 
 def main():
+    # menu window
     window = tk.Tk()
     window.geometry("160x350")
     window.title("Connect Four Menu")
@@ -609,15 +579,15 @@ def main():
     window.protocol('WM_DELETE_WINDOW', sys.exit)
     hotspot_button = tk.Button(window, text="Hotspot", command=lambda: hotspot_command(window), width=10, height=2,
                                font=("Arial", 20),
-                               background="red")
+                               background="#008cff")
     cpu_button = tk.Button(window, text="Cpu", command=lambda: level_menu(window), width=10, height=2,
                            font=("Arial", 20),
-                           background="red")
+                           background="#008cff")
     multi_button = tk.Button(window, text="multiplayer", command=lambda: multi_command(window), width=10, height=2,
                              font=("Arial", 20),
-                             background="red")
+                             background="#008cff")
     exit_button = tk.Button(window, text="Exit", command=sys.exit, width=10, height=2, font=("Arial", 20),
-                            background="blue")
+                            background="red")
     hotspot_button.pack()
     cpu_button.pack()
     multi_button.pack()
