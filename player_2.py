@@ -3,11 +3,11 @@ import sys
 import time
 from threading import Thread
 import numpy as np
-import random
+from random import choice
 import rsa
 import tkinter as tk
 import pygame
-import math
+from math import floor
 from Board import Board
 import cpu
 
@@ -185,7 +185,7 @@ class ConnectFour(Board):
                     # your turn
                     if self.turn == self.player:
                         posx = event.pos[0]
-                        col = int(math.floor(posx / self.square_size))
+                        col = int(floor(posx / self.square_size))
                         if self.is_valid_location(col):
                             self.drop(col)
 
@@ -244,7 +244,7 @@ class ConnectFour(Board):
                     # Green turn
                     if self.turn == 1:
                         posx = event.pos[0]
-                        col = int(math.floor(posx / self.square_size))
+                        col = int(floor(posx / self.square_size))
                         if self.is_valid_location(col):
                             self.drop(col)
 
@@ -260,7 +260,7 @@ class ConnectFour(Board):
                     # Red turn
                     elif self.turn == 2:
                         posx = event.pos[0]
-                        col = int(math.floor(posx / self.square_size))
+                        col = int(floor(posx / self.square_size))
                         if self.is_valid_location(col):
                             self.drop(col)
 
@@ -313,7 +313,7 @@ class ConnectFour(Board):
                     # your turn
                     if self.turn == self.player:
                         posx = event.pos[0]
-                        col = int(math.floor(posx / self.square_size))
+                        col = int(floor(posx / self.square_size))
                         if self.is_valid_location(col):
                             self.drop(col)
 
@@ -405,7 +405,7 @@ def hard(window):
 
 
 def cpu_command(depth):
-    player = random.choice([1, 2])
+    player = choice([1, 2])
     cpu_player = 3 - player
     game = ConnectFour(player)
     rival = cpu.Cpu(cpu_player, depth)
