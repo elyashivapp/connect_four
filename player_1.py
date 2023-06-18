@@ -137,11 +137,6 @@ class ConnectFour(Board):
         self.you_played_finishing = False
         self.game()
 
-    def reset(self):
-        self.turn = 1
-        self.last_move_list = []
-        self.board = np.zeros((self._row, self._column))
-
     # the game setting
     def setting_game(self):
         pygame.init()
@@ -329,7 +324,7 @@ class ConnectFour(Board):
                                 self.screen.blit(label, (40, 10))
                                 pygame.display.update()
                                 time.sleep(2)
-                                pygame.quit()
+                                self.game_over = True
                             self.finished_1 = True
                     # end of your turn
 
@@ -433,7 +428,6 @@ def cpu_command(depth):
                 rival.drop(3)
 
             else:
-                print(game.turn)
                 move = rival.get_best_move()
                 game.drop(move)
                 rival.drop(move)
@@ -443,16 +437,19 @@ def cpu_command(depth):
                 label = game.font.render(f"The {players[rival.player]} Player Won!!!", 1,
                                          players_colors[rival.player])
                 game.screen.blit(label, (40, 10))
+                pygame.display.update()
                 game.game_over = True
                 time.sleep(2)
                 game.finished_1 = True
+
         else:
             while True:
                 if game.finished_1:
                     game.finished_1 = False
                     break
                 time.sleep(0.5)
-
+    game.reset()
+    rival.reset()
     cpu_game_thread.join()
 
 

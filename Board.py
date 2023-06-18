@@ -6,7 +6,7 @@ class Board:
 
     def __init__(self, board=np.zeros((6, 7))):
         self.turn = 1
-        self.board = board
+        self.board = board.copy()
         self.last_move_list = []
         self._row = len(board)
         self._column = len(board[0])
@@ -108,3 +108,9 @@ class Board:
                     return True
 
         return self.board.all()
+
+    # resetting the board
+    def reset(self):
+        self.turn = 1
+        self.last_move_list = []
+        self.board = np.zeros((self._row, self._column))

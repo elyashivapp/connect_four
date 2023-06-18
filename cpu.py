@@ -4,9 +4,8 @@ from Board import Board
 
 class Cpu(Board):
 
-    def __init__(self, player, depth, board=np.zeros((6, 7))):
-        super().__init__(board)
-        self.board = board.copy()
+    def __init__(self, player, depth):
+        super().__init__()
         self.player = player
         self.depth = depth
         self.forth_list = []
@@ -89,6 +88,7 @@ class Cpu(Board):
     def evaluate(self):
         # evaluation score
         win_score = 100000  # Score for a winning position
+        three_in_a_row_score = 100  # Score for having three pieces in a row
         two_in_a_row_score = 10  # Score for having two pieces in a row
         one_in_a_row_score = 1  # Score for having one pieces in a row
 
@@ -103,7 +103,7 @@ class Cpu(Board):
         threes_rival = self.count_threes(3 - self.player)
 
         # calculate the evaluation score
-        score = threes_you * two_in_a_row_score - threes_rival * two_in_a_row_score
+        score = threes_you * three_in_a_row_score - threes_rival * three_in_a_row_score
 
         # evaluate the number of one pieces for each player
         pieces_you = self.count_pieces(self.player)
